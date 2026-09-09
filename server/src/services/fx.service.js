@@ -46,8 +46,11 @@ async function getRates(base) {
   if (!res.ok) throw new Error(`Rate provider responded ${res.status}`);
   const data = await res.json();
   // er-api shape: { result, base_code, rates }; exchangerate-api v6 same shape.
-  if (data.result && data.result !== "success")
-    throw new Error(data["error-type"] || "Rate provider error");
+  if (data.result && data.result !== "success") {
+    const err = new Error(data["error-type"] || "Rate provider error");
+    err.status = data["error-type"] === "unsupported-code" ? 400 : 502;
+    throw err;
+  }
   const payload = {
     base: data.base_code || b,
     date: data.time_last_update_utc || new Date().toUTCString(),

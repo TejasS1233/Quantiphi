@@ -15,6 +15,6 @@ router.post("/favorites", c.addFavorite);
 router.delete("/favorites/:id", c.removeFavorite);
 
 router.get("/trends", c.trend);
-router.post("/budget", validate(["amount"]), c.budget);
+router.post("/budget", validate(["baseCurrency", "amount"]), c.budget);
 
 module.exports = router;

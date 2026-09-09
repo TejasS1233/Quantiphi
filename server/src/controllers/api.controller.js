@@ -22,8 +22,18 @@ async function listCurrencies(req, res, next) {
 async function getRates(req, res, next) {
   try {
     const base = normalizeCode(req.query.base || "USD");
-    const data = await fx.getRates(base);
-    res.json(data);
+    if (!/^[A-Z]{3}$/.test(base))
+      return res.status(400).json({ error: "Invalid base currency code" });
+    try {
+      const data = await fx.getRates(base);
+      res.json(data);
+    } catch (err) {
+      // Upstream 4xx (unknown code) -> 400; upstream 5xx/network -> 502
+      if (/responded 4\d\d/.test(err.message))
+        return res.status(400).json({ error: `Unsupported base currency: ${base}` });
+      err.status = err.status || 502;
+      next(err);
+    }
   } catch (err) {
     next(err);
   }
@@ -108,6 +118,7 @@ async function trend(req, res, next) {
     );
     res.json(data);
   } catch (err) {
+    if (/Trend provider|No trend data/.test(err.message)) err.status = 502;
     next(err);
   }
 }

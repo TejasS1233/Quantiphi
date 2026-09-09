@@ -9,6 +9,7 @@ import { Trends } from "@/pages/Trends.jsx";
 import { Budget } from "@/pages/Budget.jsx";
 import { FavoritesPage } from "@/pages/FavoritesPage.jsx";
 import { Showcase } from "@/pages/Showcase.jsx";
+import { NotFound } from "@/pages/NotFound.jsx";
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -33,7 +34,7 @@ export default function App() {
           <Route path="/budget" element={<Budget />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/showcase" element={<Showcase />} />
-          <Route path="*" element={<Home />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

@@ -125,7 +125,7 @@ export function Home() {
           >
             <Button size="lg" asChild className="h-12 rounded-full px-8 text-base shadow-[0_0_32px_-6px_var(--primary)]">
               <Link to="/convert">
-                Start converting <ArrowRight />
+                Start converting
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="h-12 rounded-full px-8 text-base">

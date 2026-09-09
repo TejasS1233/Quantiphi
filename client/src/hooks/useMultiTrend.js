@@ -66,6 +66,25 @@ export function useMultiTrend(base, targets, days) {
   return state;
 }
 
+/** Single live trend series. */
+export function useTrend(base, target, days) {
+  const [s, setS] = useState({ points: [], loading: true, error: "" });
+
+  useEffect(() => {
+    let on = true;
+    setS({ points: [], loading: true, error: "" });
+    api
+      .trends(base, target, Number(days))
+      .then((d) => on && setS({ points: d.points || [], loading: false, error: "" }))
+      .catch((e) => on && setS({ points: [], loading: false, error: e.message }));
+    return () => {
+      on = false;
+    };
+  }, [base, target, days]);
+
+  return s;
+}
+
 /** Where the last value sits in its [low, high] range → 0..100. */
 export function positionInRange(points) {
   if (!points?.length) return null;

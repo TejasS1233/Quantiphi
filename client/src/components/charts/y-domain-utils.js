@@ -1,0 +1,118 @@
+import { scaleLinear } from "@visx/scale";
+import { Y_DOMAIN_TWEEN_SKIP_THRESHOLD } from "./chart-phase";
+import { groupLinesByYAxisId, normalizeYAxisId } from "./y-axis-scales";
+
+/** Apply visx `nice()` to raw domain endpoints for stable grid ticks. */
+export function niceYDomain(domain) {
+  const scale = scaleLinear({ domain, range: [0, 1], nice: true });
+  const niceDomain = scale.domain();
+  return [niceDomain[0] ?? domain[0], niceDomain[1] ?? domain[1]];
+}
+
+/**
+ * Skip Y tween when both endpoints move less than the threshold relative to span.
+ * When in doubt callers should tween — beauty wins over micro-optimization.
+ */
+export function shouldTweenYDomain(from, to) {
+  const span = Math.max(
+    Math.abs(to[1] - to[0]),
+    Math.abs(from[1] - from[0]),
+    1
+  );
+  const deltaMin = Math.abs(to[0] - from[0]) / span;
+  const deltaMax = Math.abs(to[1] - from[1]) / span;
+  return (
+    deltaMin >= Y_DOMAIN_TWEEN_SKIP_THRESHOLD ||
+    deltaMax >= Y_DOMAIN_TWEEN_SKIP_THRESHOLD
+  );
+}
+
+/** Phases where the chart shows loading chrome (shimmer, pulse, label). */
+export function isLoadingChromePhase(phase) {
+  return phase === "loading" || phase === "revealingLoading";
+}
+
+/** Phases where grid lines use loading stroke styling (muted / dashed chrome). */
+export function isLoadingGridChromePhase(phase) {
+  return (
+    phase === "loading" || phase === "exiting" || phase === "gridTweenLoading"
+  );
+}
+
+/** Phases where Y-domain tween runs after the series has exited. */
+export function isYDomainTweenPhase(phase) {
+  return phase === "gridTweenLoading" || phase === "gridTweenReady";
+}
+
+/** Phases where {@link ReferenceArea} bands are shown (fade in/out on transitions). */
+export function isReferenceAreaVisiblePhase(phase) {
+  return (
+    phase === "ready" || phase === "revealing" || phase === "gridTweenReady"
+  );
+}
+
+export function resolveAnimatedYDestinationDomains(chartPhase, skeletonByAxis, targetByAxis) {
+  switch (chartPhase) {
+    case "loading":
+    case "exiting":
+    case "gridTweenLoading":
+      return skeletonByAxis;
+    case "exitingReady":
+    case "gridTweenReady":
+    case "revealing":
+    case "ready":
+      return targetByAxis;
+    default:
+      return targetByAxis;
+  }
+}
+
+export function computeYDomainsByAxis(
+  {
+    lines,
+    resolveDomain
+  }
+) {
+  const groups = groupLinesByYAxisId(lines);
+  const domains = {};
+
+  for (const [axisId, axisLines] of groups) {
+    const dataKeys = axisLines.map((line) => line.dataKey);
+    domains[normalizeYAxisId(axisId)] = niceYDomain(resolveDomain(dataKeys));
+  }
+
+  if (!domains.left) {
+    domains.left = niceYDomain([0, 100]);
+  }
+
+  return domains;
+}
+
+/** Merge domain maps, normalizing axis ids to strings. */
+export function mergeYDomainRecords(...records) {
+  const merged = {};
+  for (const record of records) {
+    for (const [axisId, domain] of Object.entries(record)) {
+      merged[normalizeYAxisId(axisId)] = domain;
+    }
+  }
+  return merged;
+}
+
+export function domainsEqual(left, right) {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  for (const axisId of leftKeys) {
+    const from = left[axisId];
+    const to = right[axisId];
+    if (!(from && to) || from[0] !== to[0] || from[1] !== to[1]) {
+      return false;
+    }
+  }
+
+  return true;
+}

@@ -7,16 +7,39 @@ comparison, and a travel budgeting experience. Built for the Quantiphi × TSEC
 All business logic (pricing, math, validation) lives **server-side** — the React
 frontend is presentation-only, exactly per the brief (`docs/problem-statement.md`).
 
+## Features
+
+**From the brief**
+- Dual converter (source/target dropdowns + amount) on live ExchangeRate API rates
+- 30-day trend charts with high/low/change stats
+- Favorites list with one-click reload, persisted in SQLite
+- Conversion history persisted in SQLite, with CSV export
+- Travel Budgeting mode — one amount compared across 5 major currencies,
+  fully computed server-side
+
+**Beyond the brief**
+- Compare mode — up to 4 currencies on one chart, actual rates or rebased to 100
+- 8-day forecast projection with terminal marker (toggleable)
+- Currency strength meter ranking 8 majors by 30-day momentum
+- Visual gallery where every chart is live and togglable (pairs, ranges, bases, amounts)
+- Deal scores per destination, coffee-index math, street-smart FX tips
+- URL-synced views (refresh-safe), Sonner toasts, CSV downloads everywhere
+- Dark premium shadcn/ReUI/Bklit UI with custom favicon and 404 page
+
 ## Pages
 
 | Route | What it does |
 | ----- | ------------ |
-| `/` | Hero, live rate ticker, market stats, live USD→INR chart, feature grid |
-| `/convert` | Dual-selector converter, favorites, recent history (toasts included) |
-| `/trends` | Single-pair Bklit line chart **or** compare mode — up to 4 currencies rebased to 100 |
-| `/budget` | Travel mode: 5-currency table, deal scores, budget donut, coffee index, FX tips |
+| `/` | Hero, live rate ticker, market stats, live USD→INR chart, currency strength meter |
+| `/convert` | Dual-selector converter, favorites, recent history, history CSV download |
+| `/trends` | Single pair (with toggleable 8-day forecast projection) **or** compare mode — up to 4 currencies, actual rates or rebased to 100, CSV download |
+| `/budget` | Travel mode: 5-currency table, deal scores, budget donut, coffee index, FX tips, table CSV download |
 | `/favorites` | Save, reload and manage favorite pairs |
 | `/showcase` | Visual gallery — every chart is live and togglable (pairs, ranges, bases, amounts) |
+| `*` | 404 “Lost in the market” page |
+
+> Views sync to the URL (pair, amount, days, mode), so refresh and back-button
+> preserve state. Compare charts default to actual rates with an opt-in rebase toggle.
 
 ## Stack
 
@@ -32,12 +55,11 @@ frontend is presentation-only, exactly per the brief (`docs/problem-statement.md
 ## Quickstart
 
 ```bash
-npm run install:all   # install server + client deps
-npm run dev           # runs both (needs root devDeps: npm install)
+# terminal 1 — backend  → http://localhost:5000
+cd server && npm install && npm run dev
 
-# …or separately:
-npm run dev:server    # backend  → http://localhost:5000
-npm run dev:client    # frontend → http://localhost:5173
+# terminal 2 — frontend → http://localhost:5173
+cd client && npm install && npm run dev
 ```
 
 Optional: copy `server/.env.example` → `server/.env` and

@@ -339,7 +339,11 @@ export function Showcase() {
           {mapData.loading ? (
             <Card className="h-80 animate-pulse" />
           ) : (
-            <FxRadial title="Monthly thermometers" description="How hot each corridor runs right now" rings={rings} />
+            <FxRadial
+              title="Monthly thermometers"
+              description="0 = sitting at the 30-day low · 100 = at the high"
+              rings={rings}
+            />
           )}
         </div>
       </Section>

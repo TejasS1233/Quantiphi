@@ -1,80 +1,42 @@
-import { useEffect, useState } from "react";
-import { api } from "./api/client.js";
-import Converter from "./components/Converter.jsx";
-import TrendChart from "./components/TrendChart.jsx";
-import Favorites from "./components/Favorites.jsx";
-import BudgetMode from "./components/BudgetMode.jsx";
-import History from "./components/History.jsx";
-import "./App.css";
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { Navbar } from "@/components/layout/Navbar.jsx";
+import { Footer } from "@/components/layout/Footer.jsx";
+import { useCurrencies } from "@/hooks/useCurrencies.js";
+import { Home } from "@/pages/Home.jsx";
+import { Convert } from "@/pages/Convert.jsx";
+import { Trends } from "@/pages/Trends.jsx";
+import { Budget } from "@/pages/Budget.jsx";
+import { FavoritesPage } from "@/pages/FavoritesPage.jsx";
+import { Showcase } from "@/pages/Showcase.jsx";
 
-const FALLBACK = ["USD", "EUR", "GBP", "JPY", "INR", "AUD", "CAD", "CHF", "CNY", "SGD"];
+function ScrollTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 export default function App() {
-  const [currencies, setCurrencies] = useState(FALLBACK);
-  const [from, setFrom] = useState("USD");
-  const [to, setTo] = useState("INR");
-  const [travelMode, setTravelMode] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [backendDown, setBackendDown] = useState(false);
-
-  useEffect(() => {
-    api
-      .currencies()
-      .then((d) => {
-        if (d.currencies?.length) setCurrencies(d.currencies);
-        setBackendDown(false);
-      })
-      .catch(() => setBackendDown(true));
-  }, []);
-
-  function bump() {
-    setRefreshKey((k) => k + 1);
-  }
+  const { backendDown } = useCurrencies();
 
   return (
-    <div className="app">
-      <header className="header">
-        <div>
-          <h1>Currency Converter</h1>
-          <p className="muted">Real-time rates · 30-day trends · Travel budgeting</p>
-        </div>
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={travelMode}
-            onChange={(e) => setTravelMode(e.target.checked)}
-          />
-          ✈ Travel Budgeting
-        </label>
-      </header>
-
-      {backendDown && (
-        <p className="error banner">
-          Backend unreachable — start it with <code>npm run dev</code> in <code>/server</code>.
-        </p>
-      )}
-
-      <main className="grid">
-        {travelMode ? (
-          <BudgetMode currencies={currencies} />
-        ) : (
-          <>
-            <Converter
-              currencies={currencies}
-              from={from}
-              to={to}
-              setFrom={setFrom}
-              setTo={setTo}
-              onConverted={bump}
-            />
-            <TrendChart base={from} target={to} />
-          </>
-        )}
-        <div className="side">
-          <Favorites refreshKey={refreshKey} onSelect={(b, t) => { setFrom(b); setTo(t); setTravelMode(false); }} />
-          <History refreshKey={refreshKey} />
-        </div>
+    <div className="flex min-h-svh flex-col bg-background text-foreground">
+      <ScrollTop />
+      <Navbar backendDown={backendDown} />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/convert" element={<Convert />} />
+          <Route path="/trends" element={<Trends />} />
+          <Route path="/budget" element={<Budget />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/showcase" element={<Showcase />} />
+          <Route path="*" element={<Home />} />
+        </Routes>
       </main>
+      <Footer />
     </div>
   );
 }

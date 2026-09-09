@@ -6,6 +6,13 @@ comparison, and a travel budgeting experience. Built for the Quantiphi × TSEC
 
 All business logic (pricing, math, validation) lives **server-side** — the React
 frontend is presentation-only, exactly per the brief (`docs/problem-statement.md`).
+<img width="1906" height="836" alt="image" src="https://github.com/user-attachments/assets/ae306e13-9b37-40f6-bbfa-e239dd8cc49e" />
+<img width="1902" height="1030" alt="image" src="https://github.com/user-attachments/assets/ac56d1fb-8599-4957-957c-d54760d24b79" />
+<img width="1900" height="917" alt="image" src="https://github.com/user-attachments/assets/4a4558f6-4dbe-4152-bf82-2a97ae6ec0f7" />
+<img width="1895" height="952" alt="image" src="https://github.com/user-attachments/assets/97cc62c2-ecba-4d99-85ba-f0673da9b1c6" />
+<img width="1895" height="977" alt="image" src="https://github.com/user-attachments/assets/788d588d-fa73-41ef-96b4-b35c1bc79c3d" />
+<img width="1900" height="1025" alt="image" src="https://github.com/user-attachments/assets/f32522fd-a1c9-46d1-a8f4-e69d56d9898f" />
+
 
 ## Features
 

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeftRight, Star, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Download, Star, Trash2 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { useCurrencies } from "@/hooks/useCurrencies.js";
+import { downloadCSV } from "@/lib/csv.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +15,10 @@ import { Badge } from "@/components/reui/badge";
 
 export function Convert() {
   const { currencies, backendDown } = useCurrencies();
-  const [from, setFrom] = useState("USD");
-  const [to, setTo] = useState("INR");
-  const [amount, setAmount] = useState("100");
+  const [params, setParams] = useSearchParams();
+  const [from, setFrom] = useState(params.get("from") || "USD");
+  const [to, setTo] = useState(params.get("to") || "INR");
+  const [amount, setAmount] = useState(params.get("amount") || "100");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
@@ -33,6 +36,7 @@ export function Convert() {
     try {
       const out = await api.convert(from, to, Number(amount));
       setResult(out);
+      setParams({ from, to, amount: String(amount) }, { replace: true });
       setTick((t) => t + 1);
       toast.success(`${out.amount} ${out.from} = ${out.result.toFixed(2)} ${out.to}`);
     } catch (err) {
@@ -41,6 +45,15 @@ export function Convert() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function downloadHistory() {
+    downloadCSV(
+      "conversion-history.csv",
+      ["from", "to", "amount", "rate", "result", "when"],
+      history.map((h) => [h.from_code, h.to_code, h.amount, h.rate, h.result, h.created_at])
+    );
+    toast.success("History downloaded");
   }
 
   async function saveFavorite() {
@@ -60,8 +73,17 @@ export function Convert() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Converter</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Live rates, computed server-side and saved to history.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Converter</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Live rates, computed server-side and saved to history.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!history.length}>
+            <Download /> History CSV
+          </Button>
+        </div>
+      </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card>

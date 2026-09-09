@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+import { Download, TrendingDown, TrendingUp } from "lucide-react";
 import { api } from "@/api/client.js";
 import { useCurrencies } from "@/hooks/useCurrencies.js";
 import { INDEX_PALETTE, useMultiTrend } from "@/hooks/useMultiTrend.js";
+import { downloadCSV } from "@/lib/csv.js";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,14 +20,17 @@ const COMPARE_DEFAULTS = ["INR", "EUR", "GBP", "JPY"];
 
 export function Trends() {
   const { currencies } = useCurrencies();
-  const [mode, setMode] = useState("single");
-  const [base, setBase] = useState("USD");
-  const [target, setTarget] = useState("INR");
-  const [days, setDays] = useState("30");
+  const [params, setParams] = useSearchParams();
+  const [mode, setMode] = useState(params.get("mode") || "single");
+  const [base, setBase] = useState(params.get("base") || "USD");
+  const [target, setTarget] = useState(params.get("target") || "INR");
+  const [days, setDays] = useState(params.get("days") || "30");
+  const [forecast, setForecast] = useState(true);
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [compare, setCompare] = useState(COMPARE_DEFAULTS.slice(0, 3));
+  const [indexed, setIndexed] = useState(false);
 
   useEffect(() => {
     if (mode !== "single") return;
@@ -41,6 +48,27 @@ export function Trends() {
   }, [mode, base, target, days]);
 
   const cmp = useMultiTrend(base, compare, days);
+
+  useEffect(() => {
+    setParams({ mode, base, target, days }, { replace: true });
+  }, [mode, base, target, days, setParams]);
+
+  function download() {
+    if (mode === "single") {
+      downloadCSV(
+        `trend-${base}-${target}-${days}d.csv`,
+        ["date", `${base}_${target}`],
+        points.map((p) => [p.date, p.rate])
+      );
+    } else {
+      downloadCSV(
+        `compare-${base}-${compare.join("-")}-${days}d.csv`,
+        ["date", ...compare.map((c) => `${base}_${c}`)],
+        (indexed ? cmp.rows : cmp.raw).map((r) => [r.date.toISOString().slice(0, 10), ...compare.map((c) => r[c])])
+      );
+    }
+    toast.success("CSV downloaded");
+  }
 
   const stats = useMemo(() => {
     if (points.length < 2) return null;
@@ -76,6 +104,9 @@ export function Trends() {
             <TabsTrigger value="compare">Compare · up to 4</TabsTrigger>
           </TabsList>
         </Tabs>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={download}><Download /> CSV</Button>
+        </div>
       </div>
 
       {mode === "single" ? (
@@ -109,10 +140,19 @@ export function Trends() {
               </Tabs>
             </CardHeader>
             <CardContent>
+              <div className="mb-3 flex items-center gap-3">
+                <Label>Forecast</Label>
+                <Tabs value={forecast ? "on" : "off"} onValueChange={(v) => setForecast(v === "on")}>
+                  <TabsList>
+                    <TabsTrigger value="off">Off</TabsTrigger>
+                    <TabsTrigger value="on">8-day projection</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
               {error ? (
                 <p className="py-10 text-center text-sm text-destructive">{error}</p>
               ) : (
-                <FxLineChart points={points} loading={loading} label={`Loading ${base} → ${target}…`} aspectRatio="2.6 / 1" />
+                <FxLineChart points={points} loading={loading} label={`Loading ${base} → ${target}…`} aspectRatio="2.6 / 1" forecast={forecast} />
               )}
             </CardContent>
           </Card>
@@ -165,6 +205,15 @@ export function Trends() {
             </Tabs>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Label>Scale</Label>
+              <Tabs value={indexed ? "indexed" : "actual"} onValueChange={(v) => setIndexed(v === "indexed")}>
+                <TabsList>
+                  <TabsTrigger value="actual">Actual rates</TabsTrigger>
+                  <TabsTrigger value="indexed">Rebased to 100</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
             <Label className="mb-2 block">Targets ({compare.length}/4)</Label>
             <div className="mb-5 flex flex-wrap gap-2">
               {pairOptions.map((c) => {
@@ -193,7 +242,7 @@ export function Trends() {
               <p className="py-10 text-center text-sm text-destructive">{cmp.error}</p>
             ) : (
               <>
-                <FxIndexChart rows={cmp.rows} keys={compare} loading={cmp.loading} />
+                <FxIndexChart rows={indexed ? cmp.rows : cmp.raw} keys={compare} loading={cmp.loading} />
                 <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   {compare.map((c, i) => (
                     <span key={c} className="flex items-center gap-1.5 font-medium">
@@ -206,7 +255,9 @@ export function Trends() {
               </>
             )}
             <CardDescription className="mt-4">
-              Performance is rebased so pairs at different scales can be compared on one chart.
+              {indexed
+                ? "Rebased view — every series starts at 100 so % performance can be compared across scales."
+                : "Actual rates — pairs share one axis, so small-scale pairs sit lower on the chart."}
             </CardDescription>
           </CardContent>
         </Card>

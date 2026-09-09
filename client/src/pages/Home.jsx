@@ -18,6 +18,7 @@ import { Badge } from "@/components/reui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RateTicker } from "@/components/fx/RateTicker.jsx";
 import { FxLineChart } from "@/components/fx/FxLineChart.jsx";
+import { FxStrengthMeter } from "@/components/fx/FxStrengthMeter.jsx";
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -180,17 +181,20 @@ export function Home() {
               ))}
         </div>
 
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              USD → INR · 30 days
-              <Badge variant="success-light">Live</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FxLineChart points={trend?.points || []} loading={loading} />
-          </CardContent>
-        </Card>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                USD → INR · 30 days
+                <Badge variant="success-light">Live</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FxLineChart points={trend?.points || []} loading={loading} />
+            </CardContent>
+          </Card>
+          <FxStrengthMeter base="USD" days={30} />
+        </div>
       </section>
 
       {/* FEATURES */}

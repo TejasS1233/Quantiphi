@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Coffee, Lightbulb, PartyPopper, Plane, TrendingDown, TrendingUp } from "lucide-react";
+import { Coffee, Download, Lightbulb, PartyPopper, Plane, TrendingDown, TrendingUp } from "lucide-react";
 import { api } from "@/api/client.js";
 import { useCurrencies } from "@/hooks/useCurrencies.js";
 import { positionInRange } from "@/hooks/useMultiTrend.js";
+import { downloadCSV } from "@/lib/csv.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +35,9 @@ function verdict(score) {
 
 export function Budget() {
   const { currencies } = useCurrencies();
-  const [base, setBase] = useState("USD");
-  const [amount, setAmount] = useState("1000");
+  const [params, setParams] = useSearchParams();
+  const [base, setBase] = useState(params.get("base") || "USD");
+  const [amount, setAmount] = useState(params.get("amount") || "1000");
   const [result, setResult] = useState(null);
   const [scores, setScores] = useState({});
   const [loading, setLoading] = useState(false);
@@ -45,6 +48,7 @@ export function Budget() {
     try {
       const data = await api.budget(base, Number(amount));
       setResult(data);
+      setParams({ base, amount: String(amount) }, { replace: true });
       // Deal scores: where each quote sits in its 30-day range vs base
       const rows = await Promise.all(
         data.table.map((r) =>
@@ -67,6 +71,16 @@ export function Budget() {
     compare();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function downloadTable() {
+    if (!result) return;
+    downloadCSV(
+      `budget-${result.baseCurrency}-${result.amount}.csv`,
+      ["currency", "rate", "value"],
+      result.table.map((r) => [r.currency, r.rate, r.value])
+    );
+    toast.success("Comparison downloaded");
+  }
 
   const slices = (result?.table || []).map((r) => ({ name: r.currency, value: r.value ?? 0 }));
 
@@ -146,12 +160,21 @@ export function Budget() {
         {/* TABLE + DEAL SCORES */}
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Landing report <PartyPopper className="size-4 text-primary" />
-            </CardTitle>
-            <CardDescription>
-              {result ? `${result.amount} ${result.baseCurrency} touching down worldwide` : "Run a comparison to fill this table."}
-            </CardDescription>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  Landing report <PartyPopper className="size-4 text-primary" />
+                </CardTitle>
+                <CardDescription>
+                  {result ? `${result.amount} ${result.baseCurrency} touching down worldwide` : "Run a comparison to fill this table."}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={downloadTable} disabled={!result}>
+                  <Download /> CSV
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="px-2">
             {result && (

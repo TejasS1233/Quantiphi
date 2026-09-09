@@ -12,11 +12,11 @@ export const INDEX_PALETTE = [
 /** Fetch trends for base × targets, merge dates, forward-fill, index to 100. */
 export function useMultiTrend(base, targets, days) {
   const key = targets.join(",");
-  const [state, setState] = useState({ rows: [], loading: true, error: "" });
+  const [state, setState] = useState({ rows: [], raw: [], loading: true, error: "" });
 
   useEffect(() => {
     let on = true;
-    setState({ rows: [], loading: true, error: "" });
+    setState({ rows: [], raw: [], loading: true, error: "" });
     Promise.all(targets.map((t) => api.trends(base, t, Number(days)).catch(() => ({ points: [] }))))
       .then((results) => {
         if (!on) return;
@@ -54,9 +54,9 @@ export function useMultiTrend(base, targets, days) {
           });
           return out;
         });
-        setState({ rows: indexed, loading: false, error: "" });
+        setState({ rows: indexed, raw: rows, loading: false, error: "" });
       })
-      .catch((e) => on && setState({ rows: [], loading: false, error: e.message }));
+      .catch((e) => on && setState({ rows: [], raw: [], loading: false, error: e.message }));
     return () => {
       on = false;
     };

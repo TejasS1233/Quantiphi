@@ -8,6 +8,7 @@ import {
   useTrend,
 } from "@/hooks/useMultiTrend.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/reui/badge";
 import { FxLineChart } from "@/components/fx/FxLineChart.jsx";
 import { FxIndexChart } from "@/components/fx/FxIndexChart.jsx";
@@ -77,6 +78,7 @@ export function Showcase() {
   const [cmpBase, setCmpBase] = useState("USD");
   const [cmpDays, setCmpDays] = useState("30");
   const [cmpTargets, setCmpTargets] = useState(["INR", "EUR", "GBP"]);
+  const [cmpIndexed, setCmpIndexed] = useState(false);
   const cmp = useMultiTrend(cmpBase, cmpTargets, cmpDays);
   const cmpOptions = SIX.filter((c) => c !== cmpBase);
 
@@ -173,8 +175,18 @@ export function Showcase() {
       <Section
         kicker="Currency face-off"
         title="Head to head"
-        text="Which economy is running hottest? All contenders rebased to 100 at the starting gun."
-        controls={<DaysPicker value={cmpDays} onChange={setCmpDays} options={["14", "30", "60", "90"]} />}
+        text="Which economy is running hottest? Toggle rebasing to compare % performance on equal footing."
+        controls={
+          <div className="flex flex-wrap gap-3">
+            <Tabs value={cmpIndexed ? "indexed" : "actual"} onValueChange={(v) => setCmpIndexed(v === "indexed")}>
+              <TabsList>
+                <TabsTrigger value="actual">Actual rates</TabsTrigger>
+                <TabsTrigger value="indexed">Rebased to 100</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <DaysPicker value={cmpDays} onChange={setCmpDays} options={["14", "30", "60", "90"]} />
+          </div>
+        }
       >
         <Card>
           <CardContent className="pt-6">
@@ -215,7 +227,7 @@ export function Showcase() {
                 );
               })}
             </div>
-            <FxIndexChart rows={cmp.rows} keys={cmpTargets} loading={cmp.loading} />
+            <FxIndexChart rows={cmpIndexed ? cmp.rows : cmp.raw} keys={cmpTargets} loading={cmp.loading} />
             <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
               {cmpTargets.map((c, i) => (
                 <span key={c} className="flex items-center gap-1.5 font-medium">

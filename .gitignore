@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Env (examples are committed, real files are not)
+.env
+.env.local
+*.local
+
+# SQLite databases (schema auto-creates; only .gitkeep is tracked)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.sw?
